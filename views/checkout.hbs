@@ -11,16 +11,21 @@
       <div class="mt-20 text-info">
         Total due: $<span class="amount" data-amount="{{amount}}"></span>
       </div>
+      <div id="error-message" class="mt-20 text-danger">
+        <!-- error message to be displayed here --> 
+      </div>
     </div>
     <div class="card box-shadow mt-40">
       <div class="card-body">
-        <form name="payment-form">
+        <form name="payment-form" data-secret="{{ client_secret }}">
           <div>
             <label for="email">Email address</label>
             <input type="email" class="form-control" id="email" name="email" placeholder="you@email.com">
           </div>
           <div class="mt-20 text-center text-secondary border-placeholder">
-            Add Stripe Element here!
+            <div id="payment-element">
+              <!-- Stripe Elements will create form elements here -->
+            </div>
           </div>
           <div class="mt-20">
             <button type="submit" class="btn btn-lg btn-block btn-primary">Pay $<span class="amount" data-amount="{{amount}}"></span></button>
