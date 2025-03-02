@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const exphbs = require('express-handlebars');
 require('dotenv').config();
-const stripe = require('stripe');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 var app = express();
 
@@ -22,6 +22,29 @@ app.use(express.json({}));
 app.get('/', function(req, res) {
   res.render('index');
 });
+
+/**
+ * Async function calling Stripe SDK to create payment intent and return it
+ */
+async function createPaymentIntent(amount) {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    return paymentIntent;
+
+  } catch (error) {
+    // In a real app, persist to logger
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+
+}
 
 /**
  * Checkout route
@@ -50,18 +73,29 @@ app.get('/checkout', function(req, res) {
       break;
   }
 
-  res.render('checkout', {
-    title: title,
-    amount: amount,
-    error: error
-  });
+  // Create the payment intent and pass the client_secret to the checkout view
+  createPaymentIntent(amount)
+    .then(intent => {
+      res.render('checkout', {
+        title: title,
+        amount: amount,
+        error: error,
+        client_secret: intent.client_secret,
+        checkoutPage: true,
+        stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+      });
+    })
+    .catch(error => console.error('Failed to create payment intent'));
 });
 
 /**
  * Success route
  */
 app.get('/success', function(req, res) {
-  res.render('success');
+  res.render('success', {
+    successPage: true,
+    stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+  });
 });
 
 /**
